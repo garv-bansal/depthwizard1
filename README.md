@@ -1,55 +1,96 @@
-# <p align="center"><img align="center" width="80" src="screenshots/logo.png"/> KnitKraft</p>
-<h2 align="center">Application for monitoring of Wool from Farm to Fabric</h2>
-<hr>
-<h2 align="center">TEAM VIZION : Winner 🏆 Of Smart India Hackathon 2023 (SIH 2023) 🌟</h2>
-<img src="screenshots/sih23.JPG"  width="100%"/>
+# <p align="center">DepthWizard</p>
+<h2 align="center">Single-View Height Estimation and 3D Flythrough</h2>
+<h2 align="center">TEAM AlGOHOLIC1</h2>
 <h2 align="center">COMPLETE DESCRIPTION</h2>
 
-### PS ID : SIH1309
+### PS ID : SIH26175
 
-### Team ID : 3411
+### Team ID : 175991
 
-### Idea ID : 11334
+### Organization : Indian Space Research Organisation(ISRO) 
 
-### Ministry : Ministry of Textile, Government of India. 
+### Department : Department of Space / Indian Space Research Organisation
+
+<hr>
 
 ### PS Title :
-Application Development for monitoring of Wool from Farm to fabric
+DepthWizard - Single-View Height Estimation and 3D Flythrough
+
+<hr>
 
 ### PS Description :
-An App-based solution for the wool sector in India which can have the following features required: 
-1. Wool Market Information: Provides real-time market information on wool prices, trends, and news.
-2. Wool Tracking: Allows users to track the production and transport of their wool from farm to market.
-3. Quality Assurance: Provides a platform for wool producers to ensure the quality of their wool and access to wool grading services.
-4. Wool Storage and Warehousing: Helps farmers store and manage their wool inventory.
-5. Wool Processing: Helps farmers access wool processing services such as shearing, sorting and dyeing.
-6. Wool Trading Platform: Allows wool producers to buy and sell wool directly from other farmers or buyers.
-7. Online Wool Marketplace: Provides a platform for wool producers to sell their wool directly to buyers.
-8. Wool Education and Training: Provides a list of wool producers/artisans region-wise, and state-wise data to provide educational resources and training to help them improve their production, quality, design and marketing skills.
+Accurate Digital Elevation Models (DEMs) and Digital Surface Models (DSMs) are important for urban planning, disaster management and reconnaissance. Traditional elevation acquisition methods such as LiDAR, stereo imaging and InSAR can require specialised sensors, additional data or significant computational resources.
 
-### Idea Title :
-KnitKraft, all in one multilingual app that serves farmers, buyers & sellers in the wool industry.
+Single-view depth estimation provides an alternative, but monocular depth models generally produce relative depth rather than absolute metric elevation. They can also suffer from domain gaps when applied to aerial or remote-sensing imagery.
 
-### Idea Description :
-KnitKraft is a comprehensive platform targeting each and every sector in the wool industry from farmers to processing units to consumers. A farmer (shepherd) can utilise this platform for all kinds of wool management including wool tracking, trading, access to various wool related services, bulk buying and the option to store and transport wool to warehouses. The app is also designed for buyers and sellers allowing them to negotiate, list products and sell it to consumers all throughout the same application. Quality assurance of wool is also provided to ensure authenticity. Facility of live and recorded sessions for farmers are also available to boost the whole industry. This platform also has a statistics section tracking wool prices to allow farmers to sell their products at a maximum profit.
-We also have a solid business model 
-1) ESCROW based payment method between farmers and other parties. 
-2) A fee for Quality Assurance Certification. 
-It’s high time that this unorganised Wool industry be streamlined and bring a huge revolution in the textile industry altogether.
+DepthWizard addresses this by combining:
 
-### Abstract/ Summary :
-Among all the Textile Industry, the sector facing the most significant challenge is the Wool Industry due to lack of a well established market. The major problem also lies in the outdated and inadequate pre-and post loom processing facilities and no educational institute for Wool Technology. As researched TEAM VIZION has identified this as a golden opportunity to revitalise the entire industry, from initial stages of sheep rearing to the final fabric creation.
-In summary, KnitKraft is a versatile, role-based application catering to the wool industry's needs. It combines marketplace features, quality assurance, education, and services to empower farmers, buyers, and sellers, offering real-time information and support under one platform.
-Most shepherds in the country rear sheep not by choice, but due to lack of other options. We hope that KnitKraft would be able to envision and bring more people into the wool industry by their own choices, creating new job opportunities and taking our nation a step forward.
+1. A pretrained monocular depth-estimation model.
+2. Depth correction and refinement.
+3. Metric scale calibration using available scene information.
+4. Ground and building separation.
+5. 3D mesh generation with real vertical building faces.
+6. Interactive Three.js visualisation and measurement.
 
-### Status :
-We have implemented these features:
-1. A cross-platform support application to streamline the complete process from Sheep Farming to Selling Fabric to consumers.
-2. This same platform provide customised interface as per their user role i.e. Farmers, Service providers, Buyers, Educators, Quality Inspectors, Transportation and Warehouse Partners.
-3. One stop platform for farmers, buyers and all types of service providers with native Multilingual Support.
-4. An efficient, transparent and multichannel platform to ease the process for wool buyers & sellers to discover real-time wool prices, information and market trends with quality assurance.
-5. Real-time tracking of wool from farm to market and providing best buys to farmers through a reverse bidding process.
-6. An integrated educational/ training platform to educate farmers about latest market trends, news and practices to increase wool production.
+<hr>
+
+### Overview :
+DepthWizard is an end-to-end software pipeline that transforms a single optical RGB image into a measurable and navigable 3D representation of a city.
+
+The pipeline supports both non-georeferenced and georeferenced imagery:
+
+- **PNG / JPG** → relative surface model.
+- **GeoTIFF with CRS** → absolute DSM in metres when a valid metric calibration source is available.
+
+The system combines monocular depth estimation, image processing, geometric calibration, building extraction, terrain generation and an interactive Three.js viewer.
+
+The goal is to provide a usable tool rather than only a concept: **one optical image in, a measurable and navigable 3D city out.**
+
+<hr>
+
+### Input and Output :
+#### Non-Georeferenced Images
+
+For PNG/JPG images without spatial metadata:
+
+```text
+RGB Image
+   ↓
+Relative Depth
+   ↓
+Calibration / Height Scaling
+   ↓
+Relative Surface Model
+   ↓
+3D Terrain + Buildings
+   ↓
+Three.js Flythrough
+```
+
+The result is a relative surface model without an absolute geographic height datum.
+
+#### Georeferenced GeoTIFF
+
+For GeoTIFF imagery containing coordinate-system metadata:
+
+```text
+GeoTIFF + CRS
+   ↓
+Depth Estimation
+   ↓
+Detrending
+   ↓
+Metric Calibration
+   ↓
+DSM / nDSM / DTM
+   ↓
+3D City Mesh
+   ↓
+Interactive Flythrough
+```
+
+Absolute metric elevation requires at least one real measurement or a valid scene-based calibration source. The system does not silently guess a metric scale.
+
 
 ### Tech Stacks Used :
 ⦿ <b>FrontEnd :</b> 
@@ -69,12 +110,7 @@ We have implemented these features:
 * [![Render](https://img.shields.io/badge/render-0D0D0D?style=for-the-badge&logo=render&logoColor=white)](https://render.com/)
 
 ### Important URLS :
-⭐️ <b>KnitKraft :</b> [Use Mobile Phone for best viewing this Website](https://knitkraft.onrender.com/)
-
-  Some Demo Logins to Test without registering: 
-  1. Farmer - Email: farmer@admin.com  Password: 1234a
-  2. Teacher - Email: teacher@admin.com  Password: 1234a
-  3. Transport - Email: transport@admin.com  Password: 1234a
+⭐️ <b>DepthWizard :</b> (https://knitkraft.onrender.com/)
 
 [<img src="screenshots/download.gif" width="50%"/>](https://knitkraft.onrender.com/)
 
@@ -88,50 +124,146 @@ We have implemented these features:
 
 [![Watch this interactive YouTube video](https://img.youtube.com/vi/d0B1yQ7u524/hqdefault.jpg)](https://youtu.be/d0B1yQ7u524)
 
-⭐️ <b>Initial Pre-Selection Blue Print</b> : [Click Here to View](https://drive.google.com/file/d/1WngMiKF48ZAOP37BUc6nZq6fWnPLF6PT/view?usp=sharing)
-
-⭐️ <b>SIH Template PPT :</b> [Click Here to View](https://drive.google.com/file/d/1BhjldMFYz4rB5Iu3gg36Oxn4-SusAxQG/view?usp=drive_link)
-
-⭐️ <b>As Project Report :</b> [Click Here to View](https://drive.google.com/file/d/1tJvVhpuGaO4L66uNkokVx4RxQ1jWoHHH/view?usp=sharing)
-
-⭐️ <b>Extra : You can also watch our fun VLOG 😅</b>
-
-[👇🏻👇🏻👇🏻 Click Below 👇🏻👇🏻👇🏻](https://youtu.be/kYKLeQ5mnIA)
-
-[![Watch the video](https://img.youtube.com/vi/kYKLeQ5mnIA/mqdefault.jpg)](https://youtu.be/kYKLeQ5mnIA)
-
-<p align="center"><img align="center" src="screenshots/mot.png"  width="18%"/></p>
-
----
+<hr>
 
 ## Project Created & Maintained By
 
-## :heart: Team Vizion
-1. [Krishna Raj](https://github.com/krishna-raz)
-2. [Ujjwal Raj](https://github.com/uzibytes)
-3. [Rajnish Puri](https://github.com/RajnishPuri)
-4. [Prashant Kumar](https://github.com/PkThunderBolt)
-5. [Himanshu Kumar](https://github.com/I-Himanshu)
-6. [Anamika](https://github.com/Anamika282004)
-
-<b>Team Mentor</b> : [Aman Raj](https://github.com/AshAman999)
+## :heart: Team Algoholic1
+1. [Garv Bansal](https://github.com/garv-bansal)
+2. [Arpit Jain](https://github.com/arpitjain0214-pixel)
+3. [Arpit Parashar](https://github.com/arpitparashar06)
+4. [Bhavdeep Singh](https://github.com/Bit-wise-Bhavi)
+5. [Devanshi Yadav](https://github.com/I-Himanshu)
+6. [Manya Tyagi](https://github.com/manyaaaa-11)
 
 ### Hire Us
-<a href="https://www.linkedin.com/in/iamkrishnaraj/"> <img src="https://img.shields.io/badge/krishna-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
-<a href="https://www.linkedin.com/in/uraj/"> <img src="https://img.shields.io/badge/ujjwal-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
-<a href="https://www.linkedin.com/in/rajnish-puri-804b11209/"> <img src="https://img.shields.io/badge/rajnish-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
-<a href="https://www.linkedin.com/in/pkprashant566/"> <img src="https://img.shields.io/badge/prashant-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
-<a href="https://www.linkedin.com/in/i-himanshu/"> <img src="https://img.shields.io/badge/himanshu-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
-<a href="https://www.linkedin.com/in/anamika0101/"> <img src="https://img.shields.io/badge/anamika-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/garvbansal2/"> <img src="https://img.shields.io/badge/garv-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/arpit-jain-8044a9365/"> <img src="https://img.shields.io/badge/arpit jain-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/arpit-parashar06/"> <img src="https://img.shields.io/badge/arpit parashar-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/bhavdeep-singh-55a06931a/"> <img src="https://img.shields.io/badge/bhavdeep-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/devanshi-yadav-26a4323a2/"> <img src="https://img.shields.io/badge/devanshi-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/manya-tyagi-a68352380/"> <img src="https://img.shields.io/badge/manya-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
 
-### How-to-run
+## How to Run
 
-- Download NodeJS from the Official website [link](https://nodejs.org/) (if not installed)
-- Clone this Repository. 
-- Open the cloned repository in VS Code.
-- Enter command - `npm i` to install all the neccessary packages.
-- Then Enter Command - `npm start` to start the application in your local machine.
-- Or you can directly use our application on your phone by accessing this website [link](https://knitkraft.onrender.com/).
+### Prerequisites
+
+Make sure you have the following installed:
+
+* Python 3.10+
+* Node.js 18+
+* npm
+* Git
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/arpitparashar06/depthwizard.git
+cd depthwizard
+```
+
+### 2. Setup Python Environment
+
+Create a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+Activate it:
+
+**Windows:**
+
+```bash
+.venv\Scripts\activate
+```
+
+**Linux/macOS:**
+
+```bash
+source .venv/bin/activate
+```
+
+### 3. Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Start the Backend
+
+From the project root:
+
+```bash
+python backend/server.py
+```
+
+The backend will start on:
+
+```text
+http://127.0.0.1:8000
+```
+
+### 5. Setup and Start the Frontend
+
+Open a **new terminal** and navigate to the frontend:
+
+```bash
+cd frontend
+```
+
+Install the frontend dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+The frontend will be available at:
+
+```text
+http://localhost:5173
+```
+
+### 6. Open DepthWizard
+
+Open the following URL in your browser:
+
+```text
+http://localhost:5173
+```
+
+### Running Both Services
+
+DepthWizard requires both the backend and frontend to be running.
+
+**Terminal 1 — Backend**
+
+```bash
+cd depthwizard
+.venv\Scripts\activate
+python backend/server.py
+```
+
+**Terminal 2 — Frontend**
+
+```bash
+cd depthwizard/frontend
+npm run dev
+```
+
+Once both services are running, open:
+
+```text
+http://localhost:5173
+```
+
+The frontend communicates with the backend API to process the input imagery and generate the 3D city/elevation outputs.
 
 ## Support
 
@@ -140,4 +272,4 @@ You are free to send us PRs and issues, We'd love to help and improve this.
 
 <h1 align="center">🙏 THANK YOU 🙏</h1>
 
-![Typing SVG](https://readme-typing-svg.demolab.com?font=Oldenburg&color=67F7AD&lines=Best+Wishes+from+Team+Vizion)
+![Typing SVG](https://readme-typing-svg.demolab.com?font=Oldenburg&color=67F7AD&lines=Best+Wishes+from+Team+Algoholic1)
