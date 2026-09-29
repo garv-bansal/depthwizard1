@@ -175,7 +175,7 @@ def condition(arr, nodata_mask=None, do_stretch=True, do_clahe=True,
         report["stretch_lohi"] = lohi
     else:
         u8 = a.astype(np.uint8) if a.dtype == np.uint8 else \
-             np.clip(f01 * 255, 0, 255).astype(np.uint8)
+             np.clip(a.astype(np.float64) / max(float(np.nanmax(a)), 1e-9) * 255, 0, 255).astype(np.uint8)
 
     if do_clahe:
         try:
