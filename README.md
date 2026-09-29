@@ -59,15 +59,15 @@ We have implemented these features:
 
 **Example: Interlaken, Switzerland** (swisstopo imagery, 300 m × 300 m at 0.5 m, fully automatic, no height typed in)
 
-<img src="docs/screenshots/input-output.jpg"  width="100%"/>
+<img src="docs/screenshots/interlaken-input-output.jpg"  width="100%"/>
 
 | 3D Flythrough | Height Layer |
 |---|---|
-| <img src="docs/screenshots/flythrough.jpg"/> | <img src="docs/screenshots/height-layer.jpg"/> |
+| <img src="docs/screenshots/interlaken-flythrough.jpg"/> | <img src="docs/screenshots/interlaken-height-layer.jpg"/> |
 
 Checked against swissSURFACE3D LiDAR inside the app: **RMSE 1.41 m, MAE 1.05 m, correlation r = 0.92**, with no adjustment.
 
-<img src="docs/screenshots/validation.jpg"  width="100%"/>
+<img src="docs/screenshots/interlaken-validation.jpg"  width="100%"/>
 
 ### Tech Stacks Used :
 ⦿ <b>AI / ML :</b>
@@ -100,7 +100,7 @@ Checked against swissSURFACE3D LiDAR inside the app: **RMSE 1.41 m, MAE 1.05 m, 
 
   Try it without your own image: use the Indian demo scene in the `demo/` folder (`india_andhra.tif`).
 
-[<img src="docs/screenshots/results.jpg" width="50%"/>](https://depthwizard-production-09d9.up.railway.app/)
+[<img src="docs/screenshots/interlaken-results.jpg" width="50%"/>](https://depthwizard-production-09d9.up.railway.app/)
 
 ⭐️ <b>SIH Idea PPT :</b> [Click Here to View](ADD_PPT_LINK_HERE)
 
