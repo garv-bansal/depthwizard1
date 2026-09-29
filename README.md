@@ -57,11 +57,17 @@ We have implemented these features:
 | Zero-shot Depth Anything V2 + one known height | 5.37 m | 3.45 m | 0.78 | 6.20 | 3.73 | 4.41 | 7.55 |
 | **DepthWizard hybrid, fully automatic** | **4.91 m** | **2.49 m** | **0.84** | 5.06 | 4.08 | 3.20 | 6.18 |
 
+**Example: Interlaken, Switzerland** (swisstopo imagery, 300 m × 300 m at 0.5 m, fully automatic, no height typed in)
+
 <img src="docs/screenshots/input-output.jpg"  width="100%"/>
 
 | 3D Flythrough | Height Layer |
 |---|---|
 | <img src="docs/screenshots/flythrough.jpg"/> | <img src="docs/screenshots/height-layer.jpg"/> |
+
+Checked against swissSURFACE3D LiDAR inside the app: **RMSE 1.41 m, MAE 1.05 m, correlation r = 0.92**, with no adjustment.
+
+<img src="docs/screenshots/validation.jpg"  width="100%"/>
 
 ### Tech Stacks Used :
 ⦿ <b>AI / ML :</b>
@@ -137,6 +143,7 @@ We have implemented these features:
 4. Mou & Zhu, "IM2HEIGHT: Height Estimation from Single Monocular Imagery," 2018. [Link](https://arxiv.org/abs/1802.10249)
 5. He, Sun & Tang, "Guided Image Filtering," IEEE TPAMI 2013. [Link](https://ieeexplore.ieee.org/document/6319316)
 
+Example imagery and reference LiDAR: © swisstopo (SWISSIMAGE, swissSURFACE3D), open government data.
 Demo imagery: 'sadanand' by hareesh via [OpenAerialMap](https://openaerialmap.org/), CC-BY 4.0.
 
 ## Support
