@@ -1,0 +1,182 @@
+// Friendly names for the products.
+const FILES = {
+  'dsm.tif':         ['Surface model', 'top of everything · DSM'],
+  'ndsm.tif':        ['Height above ground', 'buildings and canopy · nDSM'],
+  'dtm.tif':         ['Bare terrain', 'ground under the structures · DTM'],
+  'uncertainty.tif': ['Confidence map', 'disagreement between passes'],
+  'dem_coarse.tif':  ['Coarse DEM', 'COP30 terrain baseline'],
+  'terrain.glb':     ['3D model', 'glTF, opens in any viewer'],
+  'height16.png':    ['Elevation map', '16-bit greyscale'],
+  'texture.png':     ['Texture', 'source image, resampled'],
+  'meta.json':       ['Run metadata', 'every parameter and result'],
+  'validation.md':   ['Validation report', 'readable summary'],
+  'validation.json': ['Validation data', 'machine readable'],
+  'error_map.png':   ['Error map', 'figure'],
+  'scatter.png':     ['Scatter', 'figure'],
+  'stability.png':   ['Stability', 'figure']
+}
+
+function Datum ({ res }) {
+  if (res.datum === 'sea level') {
+    return (
+      <p className="datum ok">
+        <span>
+          <b>Measured from sea level.</b> A coarse DEM supplied the terrain baseline,
+          so these are true absolute elevations.
+        </span>
+      </p>
+    )
+  }
+  if (res.datum === 'local ground') {
+    return (
+      <p className="datum risk">
+        <span>
+          <b>Measured from LOCAL GROUND.</b> No coarse DEM was available, so these are
+          not sea-level elevations even though the GeoTIFF is tagged absolute.
+          Score this against an nDSM, never against an absolute DSM.
+        </span>
+      </p>
+    )
+  }
+  return (
+    <p className="datum rel">
+      <span>
+        <b>Relative surface.</b> This image carries no coordinate system, so heights
+        are scaled to a plausible range rather than measured. Upload a GeoTIFF with a
+        CRS for true metres.
+      </span>
+    </p>
+  )
+}
+
+export default function Results ({ res, job, fileUrl, extraFiles = [] }) {
+  if (!res) return null
+  const u = res.datum === 'relative' ? 'm*' : 'm'
+  // Res.files is the folder listing as it stood when the run finished.
+  const files = [...new Set([...(res.files || []), ...extraFiles])]
+    .filter((f) => !f.startsWith('source'))
+    .sort()
+
+  return (
+    <>
+      <div className="stats">
+        <div className="stat">
+          <span className="k">Relief</span>
+          <span className="v">{res.relief_m.toFixed(1)} <small>{u}</small></span>
+        </div>
+        <div className="stat">
+          <span className="k">Median slope</span>
+          <span className="v">{res.median_slope_deg.toFixed(1)}<small>°</small></span>
+        </div>
+        <div className="stat">
+          <span className="k">Triangles</span>
+          <span className="v">{(res.triangles / 1000).toFixed(0)}<small>k</small></span>
+        </div>
+        {res.info?.n != null && (
+          <div className="stat">
+            <span className="k">Buildings</span>
+            <span className="v">{res.info.n}</span>
+          </div>
+        )}
+      </div>
+
+      <Datum res={res} />
+
+      <table className="rows">
+        <tbody>
+          <tr>
+            <td>Extent</td>
+            <td className="mono">{res.width} × {res.height} px @ {res.px_size_m.toFixed(2)} m/px</td>
+          </tr>
+          <tr>
+            <td>Height range</td>
+            <td className="mono">{res.min_m.toFixed(1)} – {res.max_m.toFixed(1)} {u}</td>
+          </tr>
+          {res.info?.engine && res.info.engine !== 'zeroshot' && (
+            <tr>
+              <td>Engine</td>
+              <td className="mono">{{ finetuned: 'A: fine-tuned relative depth',
+                                     metric: 'B: HeightNet metres',
+                                     hybrid: 'A+B: relative depth, calibrated and fused' }[res.info.engine] || res.info.engine}
+                {res.info.model && <span style={{ color: 'var(--faint)' }}> · {res.info.model}</span>}
+                {res.info.fusion_weight_b_mean != null && (
+                  <span style={{ color: 'var(--faint)' }}> · weight on B {Number(res.info.fusion_weight_b_mean).toFixed(2)}</span>
+                )}</td>
+            </tr>
+          )}
+          {res.info?.alpha != null && res.info?.engine !== 'metric' && (
+            <tr>
+              <td>Scale</td>
+              <td className="mono">alpha {Number(res.info.alpha).toFixed(3)} m per model unit</td>
+            </tr>
+          )}
+          {res.info?.model_vs_anchors && Object.keys(res.info.model_vs_anchors).length > 0 && (
+            <tr>
+              <td>Cross-checks</td>
+              <td className="mono">{Object.entries(res.info.model_vs_anchors)
+                .map(([k, v]) => `${k} x${Number(v).toFixed(2)}`).join(', ')}
+                <span style={{ color: 'var(--faint)' }}> · x1.00 = agrees with the model</span></td>
+            </tr>
+          )}
+          {res.scale_source && (
+            <tr>
+              <td>Scale from</td>
+              <td className="mono">{res.scale_source}
+                {res.info?.prior_source === 'ghsl' && (
+                  <span style={{ color: 'var(--faint)' }}> · enter the tallest structure to override</span>
+                )}</td>
+            </tr>
+          )}
+          {res.info?.sigma_m != null && (
+            <tr>
+              <td>Object / terrain split</td>
+              <td className="mono">{Number(res.info.sigma_m).toFixed(0)} m
+                <span style={{ color: 'var(--faint)' }}> · from scene structures</span></td>
+            </tr>
+          )}
+          {res.info?.n != null && (
+            <tr>
+              <td>Tallest extruded</td>
+              <td className="mono">{Number(res.info.height_max_m || 0).toFixed(0)} m</td>
+            </tr>
+          )}
+          {res.info?.depth_inverted === true && (
+            <tr>
+              <td>Depth flipped</td>
+              <td className="mono">
+                yes · luma-depth r {Number(res.info.luma_depth_r ?? 0).toFixed(2)}
+                <span style={{ color: 'var(--faint)' }}> · the backbone read this
+                  scene upside down and it was corrected. If buildings look like
+                  pits, this is the reason.</span>
+              </td>
+            </tr>
+          )}
+          {res.info?.self_check?.rmse_m != null && (
+            <tr>
+              <td>Shadow self-check</td>
+              <td className="mono">{Number(res.info.self_check.rmse_m).toFixed(2)} m RMSE
+                <span style={{ color: 'var(--faint)' }}> · {res.info.self_check.n} held-out points</span></td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+
+      <p className="section-label" style={{ marginTop: 24 }}>Download</p>
+      <div className="files">
+        {files.map((f) => {
+          const [name, desc] = FILES[f] || [f, '']
+          const ext = (f.split('.').pop() || '').toLowerCase()
+          return (
+            <a key={f} className="file" href={fileUrl(job.id, f)} download title={f}>
+              <span className="ext">{ext}</span>
+              <span className="txt">
+                <span className="n">{name}</span>
+                <span className="d">{desc || f}</span>
+              </span>
+            </a>
+          )
+        })}
+      </div>
+    </>
+  )
+}
