@@ -1,0 +1,268 @@
+#!/usr/bin/env python
+"""The whole pipeline in one command, no browser involved."""
+import argparse
+import os
+import sys
+import time
+
+import numpy as np
+
+
+from _bootstrap import load_env                                        # noqa: E402
+
+load_env()
+
+from inference import (estimate_elevation, load_image, export_products,  # noqa: E402
+                       clip_below_ground, ghsl_height_prior, resolve_engine,
+                       engine_needs_anchor, ENGINE_LABEL, refine_by_default)
+from mesh_builder import build_mesh, build_city, export_mesh, slope_map  # noqa: E402
+from refine import refine                                              # noqa: E402
+
+RELATIVE_FULL_SCALE_M = 60.0
+
+
+def parse_gcps(items):
+    """Gcp row,col,height (repeatable, needs at least two)."""
+    out = []
+    for s in items or []:
+        parts = s.split(",")
+        if len(parts) != 3:
+            raise SystemExit(f"--gcp wants row,col,height - got {s!r}")
+        r, c, h = (float(x) for x in parts)
+        out.append((int(r), int(c), h))
+    return out
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="single-view optical image -> DSM + navigable mesh",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("image", help="PNG/JPG (relative) or GeoTIFF with a CRS (metres)")
+    parser.add_argument("-o", "--out", default=None,
+                    help="output directory (default: outputs/<image stem>)")
+
+    g = parser.add_argument_group("scale (georeferenced input needs exactly one)")
+    g.add_argument("--tallest", type=float, default=None, metavar="M",
+                   help="height of the TALLEST structure you can identify, in metres")
+    g.add_argument("--height-reference", default="tallest",
+                   choices=("tallest", "tall", "typical"),
+                   help="what --tallest refers to in the height distribution")
+    g.add_argument("--gcp", action="append", metavar="ROW,COL,H",
+                   help="ground control point, repeatable, at least two")
+    g.add_argument("--sun", nargs=2, type=float, default=None,
+                   metavar=("AZ", "ELEV"),
+                   help="sun azimuth and elevation for shadow calibration; "
+                        "read from the GeoTIFF tags automatically when present")
+    g.add_argument("--fuse-scale", action="store_true",
+                   help="combine every calibrator that answers into one alpha "
+                        "by inverse variance, instead of taking the first in "
+                        "priority order. Needs at least two sources; refuses "
+                        "and keeps the tightest when they disagree beyond "
+                        "their error bars")
+    g.add_argument("--no-auto-prior", action="store_true",
+                   help="with no scale flag, stop instead of using GHSL "
+                        "building height as the prior")
+    g.add_argument("--engine", default=None,
+                   choices=("auto", "zeroshot", "finetuned", "metric", "hybrid"),
+                   help="auto = hybrid when models/heightnet.pt exists (then no "
+                        "scale flag is needed), else zeroshot")
+    g.add_argument("--alpha-gain", type=float, default=1.0,
+                   help="multiplier on the fitted scale; feed back the value "
+                        "the validation report suggests")
+
+    t = parser.add_argument_group("terrain and geometry")
+    t.add_argument("--no-dem", action="store_true",
+                   help="skip the COP30 baseline; output becomes height above ground")
+    t.add_argument("--gsd", type=float, default=0.5, metavar="M",
+                   help="metres per pixel, used only when the file has no coordinates")
+    t.add_argument("--style", default="city", choices=("city", "stepped", "smooth"))
+    t.add_argument("--grid", type=int, default=256, help="mesh resolution")
+    t.add_argument("--exaggeration", type=float, default=1.5)
+    t.add_argument("--rotations", type=int, default=4,
+                   help="ensemble passes; 4 cancels the frame ramp, 1 is fastest")
+    t.add_argument("--flatten", type=float, default=0.8)
+    t.add_argument("--sharpen", type=float, default=0.4)
+    t.add_argument("--refine", default="auto", choices=("auto", "on", "off"),
+                   help="edge clean-up; auto = only for the zero-shot engine, "
+                        "where it helps (it smears the fine-tuned model's edges)")
+
+    parser.add_argument("--reference", default=None, metavar="TIF",
+                    help="reference LiDAR raster - scores the result when given")
+    args = parser.parse_args()
+
+    if not os.path.exists(args.image):
+        raise SystemExit(f"no such file: {args.image}")
+
+    out = args.out or os.path.join(
+        "outputs", os.path.splitext(os.path.basename(args.image))[0])
+    os.makedirs(out, exist_ok=True)
+
+    t0 = time.time()
+    rgb, meta = load_image(args.image)
+    mode = meta["mode"]
+    print(f"\n=== {os.path.basename(args.image)} ===")
+    print(f"{rgb.shape[1]}x{rgb.shape[0]} px   mode={mode}"
+          f"   crs={meta['crs']}   px={meta['px_size_m']}")
+
+    gcps = parse_gcps(args.gcp)
+    azimuth = el = None
+    prior_source, prior_info, auto_after_sun = "person", None, False
+    if args.sun:
+        azimuth, el = args.sun
+
+    engine = resolve_engine(args.engine)
+    print(f"[engine] {ENGINE_LABEL[engine]}")
+    if mode == "absolute" and not engine_needs_anchor(engine):
+        auto_after_sun = not args.no_auto_prior
+    elif mode == "absolute":
+        # The same refusal server.py makes.
+        if not args.tallest and len(gcps) < 2 and not args.sun:
+            if meta.get("sun_azimuth") is not None and meta.get("sun_elevation") is not None:
+                auto_after_sun = not args.no_auto_prior
+                print(f"[scale] no flag given - calibrating from the sun angles "
+                      f"in the tags ({meta['sun_azimuth']}, {meta['sun_elevation']})")
+            else:
+                prior, why = ((None, "--no-auto-prior was given")
+                              if args.no_auto_prior else ghsl_height_prior(meta))
+                if prior is None:
+                    raise SystemExit(
+                        "\nThis image is georeferenced, so the output is in metres -\n"
+                        "and metres need a scale anchor. Pass one of:\n\n"
+                        "  --tallest 95            height of the tallest structure, in metres\n"
+                        "  --gcp r,c,h --gcp r,c,h at least two ground control points\n"
+                        "  --sun 145 52            sun azimuth and elevation\n\n"
+                        f"The automatic GHSL prior could not help: {why}.")
+                args.tallest = float(prior["known_height_m"])
+                prior_source, prior_info = "ghsl", prior
+                print(f"[scale] no flag given - GHSL building height under this "
+                      f"scene: {args.tallest:g} m ({prior['n_built']} of "
+                      f"{prior['n_cells']} 100 m cells built). A prior, not a "
+                      f"measurement: --tallest overrides it.")
+    elif args.tallest:
+        print(f"[scale] no coordinates in this file, so --tallest {args.tallest:g} "
+              f"sets the full-scale height rather than calibrating metres")
+
+    height, meta, info = estimate_elevation(
+        args.image, known_height_m=args.tallest, gcps=gcps or None,
+        sun_azimuth=azimuth, sun_elevation=el,
+        use_dem=not args.no_dem, alpha_gain=args.alpha_gain,
+        rotations=args.rotations, height_reference=args.height_reference,
+        fuse_scale=args.fuse_scale, outdir=out,
+        prior_source=prior_source, prior_info=prior_info,
+        auto_prior=auto_after_sun, engine=engine,
+        gsd_hint=args.gsd if mode != "absolute" else None)
+
+    px = meta.get("px_size_m") or args.gsd
+    if mode == "relative":
+        scale = (args.tallest or float(info.get("suggested_full_scale_m") or 0)
+                 or RELATIVE_FULL_SCALE_M)
+        height = height * scale
+        meta = dict(meta, px_size_m=px)
+        info["relative_full_scale_m"] = scale
+        if meta.get("_uncertainty") is not None:
+            meta["_uncertainty"] = meta["_uncertainty"] * scale
+        print(f"[relative] scaled to a {scale:.0f} m full range")
+
+    do_refine = (refine_by_default(info.get("engine") or "zeroshot") if args.refine == "auto"
+                 else args.refine == "on")
+    if do_refine and (args.flatten or args.sharpen):
+        # The split this scene actually used, not refine's 15 m default
+        height, rinfo = refine(height, rgb, px_size_m=px,
+                               object_sigma_m=float(info.get("sigma_m") or 15.0),
+                               flatten=args.flatten, sharpen=args.sharpen)
+        if rinfo.get("applied") is False:
+            print("[refine] declined - it reduced edge crispness")
+    else:
+        rinfo = {}
+
+    height, info = clip_below_ground(height, info)
+
+    info = export_products(height, rgb, meta, out, info,
+                           uncertainty=meta.get("_uncertainty"))
+
+    if args.style == "city":
+        import buildings as B
+        nd = B.normalised_height(height, px, max_building_m=90.0)
+        mesh, cinfo = build_city(height, nd, rgb, px_size_m=px,
+                                 target_grid=args.grid,
+                                 z_exaggeration=args.exaggeration,
+                                 is_relative=False)
+        rinfo.update(cinfo)
+        glb = os.path.join(out, "terrain.glb")
+        mesh.export(glb)
+        triangles = cinfo["ground_tris"] + cinfo["roof_tris"] + cinfo["wall_tris"]
+    else:
+        mesh = build_mesh(height, rgb, px_size_m=px, target_grid=args.grid,
+                          z_exaggeration=args.exaggeration, style=args.style,
+                          is_relative=False)
+        glb = export_mesh(mesh, os.path.join(out, "terrain.glb"))
+        triangles = len(mesh.faces)
+
+    slope = slope_map(height, px)
+    calib = info.get("calibration", "")
+    datum = ("local ground" if "no DEM" in calib
+             else "sea level" if mode == "absolute" else "relative")
+
+    print("\n" + "-" * 66)
+    if datum == "local ground":
+        print("MEASURED FROM: LOCAL GROUND")
+        print("  The coarse DEM was not available, so these are NOT sea-level")
+        print("  elevations even though the GeoTIFF says MODE=absolute.")
+        print("  Score this against an nDSM, never against an absolute DSM.")
+        if not os.environ.get("OPENTOPO_KEY"):
+            print("  (OPENTOPO_KEY is empty - a free key from"
+                  " portal.opentopography.org fixes this.)")
+    elif datum == "sea level":
+        print("MEASURED FROM: sea level, COP30 supplied the terrain baseline")
+        if info.get("dem_debias_m") is not None:
+            print(f"  rooftop bias removed: terrain lowered "
+                  f"{info['dem_debias_m']:.2f} m")
+    else:
+        print("MEASURED FROM: nothing - relative surface, no metric datum")
+
+    if info.get("alpha") is not None:
+        print(f"scale        alpha {info['alpha']:.3f} m per model unit"
+              + (f" - from {info['scale_source']}" if info.get("scale_source") else ""))
+    fus = info.get("scale_fusion")
+    if fus:
+        if fus.get("applied"):
+            print(f"             fused from {fus['n_sources']} sources, "
+                  f"+/-{fus['alpha_sigma_rel']*100:.0f}% "
+                  f"(priority path would have used {info['alpha_priority']:.3f})")
+        elif fus.get("refused"):
+            print(f"             fusion REFUSED: {fus['reason']}")
+    u = "m" if datum != "relative" else "m*"
+    print(f"range        {np.nanmin(height):.1f} .. {np.nanmax(height):.1f} {u}"
+          f"   (relief {np.nanmax(height) - np.nanmin(height):.1f} {u})")
+    print(f"slope        median {np.nanmedian(slope):.1f} deg, "
+          f"99th {np.nanpercentile(slope, 99):.1f} deg")
+    if rinfo.get("n") is not None:
+        print(f"buildings    {rinfo['n']} extruded, tallest "
+              f"{float(rinfo.get('height_max_m', 0)):.0f} m")
+    print(f"mesh         {triangles:,} triangles ({args.style}) -> {glb}")
+    print(f"elapsed      {time.time() - t0:.0f}s")
+    print("-" * 66)
+
+    if args.reference:
+        import validate as V
+        print("\nscoring against", args.reference)
+        report, refarr, rgbarr = V.validate_files(
+            os.path.join(out, "dsm.tif"), args.reference, args.image, outdir=out)
+        V.error_figures(report, refarr, rgbarr, outdir=out)
+        V.save_report(report, out)
+        h = report["headline"]
+        print(f"\nRMSE {h['rmse']:.2f} m   MAE {h['mae']:.2f} m   "
+              f"r {h.get('r', float('nan')):.3f}   "
+              f"(alignment: {report.get('headline_alignment', '?')})")
+        print(f"raw, no alignment: RMSE "
+              f"{report['alignment']['raw']['rmse']:.2f} m")
+        print("full report ->", os.path.join(out, "validation.md"))
+
+    print("\noutputs in", os.path.abspath(out))
+    for f in sorted(os.listdir(out)):
+        if not f.startswith("."):
+            print("   ", f)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
