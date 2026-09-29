@@ -98,15 +98,9 @@ Checked against swissSURFACE3D LiDAR inside the app: **RMSE 1.41 m, MAE 1.05 m, 
 ### Important URLS :
 ⭐️ <b>DepthWizard Live Prototype :</b> [Click Here to Open](https://depthwizard-production-09d9.up.railway.app/)
 
-  Try it without your own image: use the Indian demo scene in the `demo/` folder (`india_andhra.tif`).
+⭐️ <b>SIH Idea PPT :</b> [Click Here to View](docs/Algoholic1_26175_GarvBansal.pdf)
 
-[<img src="docs/screenshots/interlaken-results.jpg" width="50%"/>](https://depthwizard-production-09d9.up.railway.app/)
-
-⭐️ <b>SIH Idea PPT :</b> [Click Here to View](ADD_PPT_LINK_HERE)
-
-⭐️ <b>Video : Understanding DepthWizard</b>
-
-[👇🏻👇🏻👇🏻 Click Below 👇🏻👇🏻👇🏻](ADD_YOUTUBE_LINK_HERE)
+⭐️ <b>Youtube Video :</b> [Click Here to View](https://youtu.be/HquYqR6ITIg?si=8GHgUzxU-IZQIYHt)
 
 ⭐️ <b>Technical Documentation :</b> [Click Here to View](docs/TECHNICAL.md)
 
@@ -122,9 +116,17 @@ Checked against swissSURFACE3D LiDAR inside the app: **RMSE 1.41 m, MAE 1.05 m, 
 1. [Garv Bansal](https://github.com/garv-bansal)
 2. [Arpit Parashar](https://github.com/arpitparashar06)
 3. [Arpit Jain](https://github.com/arpitjain0214-pixel)
-4. [Bhavdeep Singh](ADD_GITHUB_LINK)
-5. [Devanshi Yadav](ADD_GITHUB_LINK)
-6. [Manya Tyagi](ADD_GITHUB_LINK)
+4. [Bhavdeep Singh](https://github.com/Bit-wise-Bhavi)
+5. [Devanshi Yadav](https://github.com/Devanshi-Yadav20)
+6. [Manya Tyagi](https://github.com/manyaaaa-11)
+
+### Hire Us
+<a href="https://www.linkedin.com/in/garvbansal2/"> <img src="https://img.shields.io/badge/garv-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/arpit-jain-8044a9365/"> <img src="https://img.shields.io/badge/arpit jain-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/arpit-parashar06/"> <img src="https://img.shields.io/badge/arpit parashar-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/bhavdeep-singh-55a06931a/"> <img src="https://img.shields.io/badge/bhavdeep-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/devanshi-yadav-26a4323a2/"> <img src="https://img.shields.io/badge/devanshi-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
+<a href="https://www.linkedin.com/in/manya-tyagi-a68352380/"> <img src="https://img.shields.io/badge/manya-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Connect on LinkedIn"></a>
 
 ### How-to-run
 
