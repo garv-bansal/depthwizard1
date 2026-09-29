@@ -1,0 +1,18 @@
+.venv/
+jobs/
+outputs/
+__pycache__/
+*.pyc
+frontend/node_modules/
+# Frontend/dist is committed: a clone runs without Node.
+.DS_Store
+dem_coarse.tif
+# Depth predictions and DEM downloads - rebuilt on demand
+cache/
+mathsandml/benchmark/scenes/
+mathsandml/benchmark/results/
+.env
+*.bak
+# Training data and runs - tens of GB, rebuilt by training/prepare_*.py
+training/data/
+training/runs/

@@ -1,0 +1,21 @@
+
+.venv/
+frontend/node_modules/
+frontend/dist/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+
+# Secrets - the key is passed at run time with -e, never baked into an image
+.env
+
+# Run artefacts
+jobs/
+outputs/
+mathsandml/benchmark/scenes/
+mathsandml/benchmark/results/
+dem_coarse.tif
+cache/
+*.bak
+.DS_Store
